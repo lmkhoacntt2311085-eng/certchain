@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CertChain – Xác thực bằng cấp</title>
+<style>
+:root{--bg:#eef2f1;--ink:#12263a;--mut:#5b6b78;--ok:#1f6f5c;--bad:#b3402f;--line:#c9d4d2;--card:#fff}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,sans-serif}
+main{max-width:720px;margin:0 auto;padding:32px 20px 64px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:24px}
+h1{font:600 2rem/1.2 Georgia,serif;margin:0}
+.sub{color:var(--mut);margin:4px 0 0}
+button{font:inherit;cursor:pointer;border:1px solid var(--ink);background:var(--ink);color:#fff;padding:10px 16px;border-radius:6px}
+button.tab{background:transparent;color:var(--ink)}
+button.tab[aria-selected=true]{background:var(--ink);color:#fff}
+button:disabled{opacity:.5;cursor:wait}
+button:focus-visible,input:focus-visible{outline:3px solid #6aa89a;outline-offset:2px}
+nav{display:flex;gap:8px;margin-bottom:16px}
+section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px}
+label{display:block;font-weight:600;margin:14px 0 4px}
+input{width:100%;font:inherit;padding:9px 10px;border:1px solid var(--line);border-radius:6px}
+section button:not(.tab){margin-top:16px}
+#log{margin-top:12px;min-height:1.5em;word-break:break-all}
+.seal{margin-top:20px;display:grid;grid-template-columns:110px 1fr;gap:16px;align-items:center}
+.stamp{width:110px;height:110px;border:4px double currentColor;border-radius:50%;display:grid;place-items:center;text-align:center;font:700 1rem/1.2 Georgia,serif;transform:rotate(-8deg)}
+.ok{color:var(--ok)}.bad{color:var(--bad)}
+dl{margin:0;color:var(--ink)}dt{color:var(--mut);font-size:.85rem}dd{margin:0 0 8px;word-break:break-all}
+[hidden]{display:none!important}
+@media(max-width:480px){.seal{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:no-preference){.stamp{animation:st .4s ease-out}@keyframes st{from{transform:rotate(-8deg) scale(1.5);opacity:0}}}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <div><h1>CertChain</h1><p class="sub">Xác thực bằng cấp trên Ethereum Sepolia và IPFS</p></div>
+  <div><button id="connect">Kết nối MetaMask</button><div id="acct" class="sub"></div></div>
+</header>
+<nav>
+  <button class="tab" id="t-verify" aria-selected="true">Xác thực</button>
+  <button class="tab" id="t-issue" aria-selected="false">Phát hành</button>
+</nav>
+
+<section id="p-verify">
+  <label for="vfile">File PDF cần kiểm tra</label>
+  <input id="vfile" type="file" accept="application/pdf">
+  <label for="vhash">Hoặc nhập mã hash SHA-256</label>
+  <input id="vhash" placeholder="0x…">
+  <button id="check">Kiểm tra</button>
+  <div id="result"></div>
+</section>
+
+<section id="p-issue" hidden>
+  <label for="student">Tên người nhận</label><input id="student">
+  <label for="course">Tên bằng cấp / chứng chỉ</label><input id="course">
+  <label for="ifile">File PDF gốc</label><input id="ifile" type="file" accept="application/pdf">
+  <label for="jwt">Pinata JWT (không được lưu lại)</label><input id="jwt" type="password" autocomplete="off">
+  <label for="cid">CID trên IPFS (tự điền sau khi tải lên, hoặc dán CID có sẵn)</label><input id="cid">
+  <button id="issue">Phát hành</button>
+</section>
+
+<div id="log" role="status"></div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+<script>
+const CONTRACT_ADDRESS = "0x538d6b56513171cC77bdE5eDd0FbA1f82BD00E4b";
+const SEPOLIA = "0xaa36a7";
+const ABI = [
+  "function issueCertificate(bytes32 hash,string ipfsCid,string student,string course)",
+  "function verify(bytes32 hash) view returns (bool exists,bool revoked,string ipfsCid,string student,string course,address issuer,uint256 issuedAt)"
+];
+const $ = id => document.getElementById(id);
+const reader = new ethers.JsonRpcProvider("https://ethereum-sepolia-rpc.publicnode.com");
+let signer = null;
+
+const log = (m, c = "") => { $("log").className = c; $("log").textContent = m; };
+
+async function sha256(file) {
+  const buf = await crypto.subtle.digest("SHA-256", await file.arrayBuffer());
+  return "0x" + [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+function tab(name) {
+  for (const t of ["verify", "issue"]) {
+    $("p-" + t).hidden = t !== name;
+    $("t-" + t).setAttribute("aria-selected", t === name);
+  }
+  log("");
+}
+$("t-verify").onclick = () => tab("verify");
+$("t-issue").onclick = () => tab("issue");
+
+async function connect() {
+  if (!window.ethereum) { log("Chưa cài MetaMask.", "bad"); return; }
+  try {
+    await ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: SEPOLIA }] });
+    signer = await new ethers.BrowserProvider(ethereum).getSigner();
+    const a = await signer.getAddress();
+    $("acct").textContent = a.slice(0, 6) + "…" + a.slice(-4);
+  } catch (e) { log(e.shortMessage || e.message, "bad"); }
+}
+$("connect").onclick = connect;
+
+function row(dl, label, value, href) {
+  const dt = document.createElement("dt"), dd = document.createElement("dd");
+  dt.textContent = label;
+  if (href) { const a = document.createElement("a"); a.href = href; a.target = "_blank"; a.rel = "noopener"; a.textContent = value; dd.append(a); }
+  else dd.textContent = value;
+  dl.append(dt, dd);
+}
+
+$("check").onclick = async () => {
+  const f = $("vfile").files[0];
+  let h = $("vhash").value.trim();
+  try {
+    if (f) h = await sha256(f);
+    if (!/^0x[0-9a-fA-F]{64}$/.test(h)) { log("Chọn file PDF hoặc nhập hash gồm 0x và 64 ký tự.", "bad"); return; }
+    log("Đang truy vấn blockchain…");
+    const r = await new ethers.Contract(CONTRACT_ADDRESS, ABI, reader).verify(h);
+    log("");
+    const box = $("result"); box.replaceChildren();
+    const wrap = document.createElement("div"); wrap.className = "seal";
+    const st = document.createElement("div");
+    const state = !r.exists ? ["Không tìm thấy", "bad"] : r.revoked ? ["Đã thu hồi", "bad"] : ["Hợp lệ", "ok"];
+    st.className = "stamp " + state[1]; st.textContent = state[0];
+    const dl = document.createElement("dl");
+    row(dl, "Hash SHA-256", h);
+    if (r.exists) {
+      row(dl, "Người nhận", r.student);
+      row(dl, "Bằng cấp", r.course);
+      row(dl, "Đơn vị cấp", r.issuer, "https://sepolia.etherscan.io/address/" + r.issuer);
+      row(dl, "Ngày cấp", new Date(Number(r.issuedAt) * 1000).toLocaleString("vi-VN"));
+      row(dl, "File gốc trên IPFS", r.ipfsCid, "https://ipfs.io/ipfs/" + r.ipfsCid);
+    }
+    wrap.append(st, dl); box.append(wrap);
+  } catch (e) { log(e.shortMessage || e.message, "bad"); }
+};
+
+$("issue").onclick = async () => {
+  const btn = $("issue");
+  const f = $("ifile").files[0], st = $("student").value.trim(), co = $("course").value.trim();
+  if (!f || !st || !co) { log("Nhập đủ tên, bằng cấp và chọn file PDF.", "bad"); return; }
+  btn.disabled = true;
+  try {
+    if (!signer) await connect();
+    if (!signer) return;
+    const h = await sha256(f);
+    let cid = $("cid").value.trim();
+    if (!cid) {
+      const jwt = $("jwt").value.trim();
+      if (!jwt) { log("Nhập Pinata JWT hoặc dán CID có sẵn.", "bad"); return; }
+      log("Đang tải file lên IPFS…");
+      const fd = new FormData(); fd.append("file", f); fd.append("network", "public");
+      const res = await fetch("https://uploads.pinata.cloud/v3/files", { method: "POST", headers: { Authorization: "Bearer " + jwt }, body: fd });
+      const j = await res.json();
+      if (!res.ok) throw new Error("Pinata từ chối: " + JSON.stringify(j));
+      cid = j.data.cid; $("cid").value = cid;
+    }
+    log("Xác nhận giao dịch trong MetaMask…");
+    const tx = await new ethers.Contract(CONTRACT_ADDRESS, ABI, signer).issueCertificate(h, cid, st, co);
+    log("Đang chờ Sepolia xác nhận…");
+    await tx.wait();
+    log("Đã phát hành. Hash: " + h, "ok");
+  } catch (e) { log(e.shortMessage || e.message, "bad"); }
+  finally { btn.disabled = false; }
+};
+</script>
+</body>
+</html>
