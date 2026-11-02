@@ -3,80 +3,136 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CertChain – Xác thực bằng cấp</title>
+<title>CertChain – Xác thực bằng cấp trên blockchain</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#eef2f1;--ink:#12263a;--mut:#5b6b78;--ok:#1f6f5c;--bad:#b3402f;--line:#c9d4d2;--card:#fff}
+:root{--bg:#eef2f1;--card:#fff;--ink:#0f2236;--mut:#5a6b78;--line:#d5dedb;--soft:#f5f8f7;--gold:#b8892f;--ok:#14705a;--bad:#b3402f;--btn:#0f2236;--on:#fff}
+@media(prefers-color-scheme:dark){:root{--bg:#0b141d;--card:#12202c;--ink:#e9f0f3;--mut:#93a5b1;--line:#243645;--soft:#0f1c27;--gold:#d4a850;--ok:#4fc3a1;--bad:#ef8a78;--btn:#e9f0f3;--on:#0b141d}}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,sans-serif}
-main{max-width:720px;margin:0 auto;padding:32px 20px 64px}
-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:24px}
-h1{font:600 2rem/1.2 Georgia,serif;margin:0}
-.sub{color:var(--mut);margin:4px 0 0}
-button{font:inherit;cursor:pointer;border:1px solid var(--ink);background:var(--ink);color:#fff;padding:10px 16px;border-radius:6px}
-button.tab{background:transparent;color:var(--ink)}
-button.tab[aria-selected=true]{background:var(--ink);color:#fff}
-button:disabled{opacity:.5;cursor:wait}
-button:focus-visible,input:focus-visible{outline:3px solid #6aa89a;outline-offset:2px}
-nav{display:flex;gap:8px;margin-bottom:16px}
-section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px}
-label{display:block;font-weight:600;margin:14px 0 4px}
-input{width:100%;font:inherit;padding:9px 10px;border:1px solid var(--line);border-radius:6px}
-section button:not(.tab){margin-top:16px}
-#log{margin-top:12px;min-height:1.5em;word-break:break-all}
-.seal{margin-top:20px;display:grid;grid-template-columns:110px 1fr;gap:16px;align-items:center}
-.stamp{width:110px;height:110px;border:4px double currentColor;border-radius:50%;display:grid;place-items:center;text-align:center;font:700 1rem/1.2 Georgia,serif;transform:rotate(-8deg)}
+body{margin:0;color:var(--ink);font:16px/1.6 "Be Vietnam Pro",system-ui,sans-serif;background:radial-gradient(1100px 420px at 50% -160px,rgba(184,137,47,.16),transparent),var(--bg);min-height:100vh}
+main{max-width:760px;margin:0 auto;padding:28px 20px 64px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font:700 1.5rem Fraunces,Georgia,serif}
+.brand svg{width:34px;height:34px;color:var(--gold)}
+.wallet{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pill{font-size:.8rem;padding:4px 10px;border:1px solid var(--line);border-radius:99px;color:var(--mut);background:var(--card)}
+.pill::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--gold);margin-right:6px}
+.pill.on::before{background:var(--ok)}
+h1{font:700 clamp(1.9rem,5vw,2.7rem)/1.15 Fraunces,Georgia,serif;margin:36px 0 8px;letter-spacing:-.01em}
+.lead{color:var(--mut);margin:0 0 28px;max-width:56ch}
+button{font:inherit;font-weight:500;cursor:pointer;border:1px solid var(--btn);background:var(--btn);color:var(--on);padding:10px 18px;border-radius:10px;transition:transform .15s,opacity .15s}
+button:hover{transform:translateY(-1px)}
+button:disabled{opacity:.55;cursor:wait;transform:none}
+button.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+button:focus-visible,input:focus-visible,summary:focus-visible,.dz:focus-within{outline:3px solid var(--gold);outline-offset:2px}
+.tabs{display:inline-flex;padding:4px;gap:4px;background:var(--soft);border:1px solid var(--line);border-radius:12px;margin-bottom:16px}
+.tabs button{background:transparent;color:var(--mut);border:0;padding:8px 20px}
+.tabs button[aria-selected=true]{background:var(--card);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 12px 40px -18px rgba(15,34,54,.35)}
+.card::before{content:"";display:block;height:6px;background:repeating-linear-gradient(90deg,var(--gold) 0 10px,transparent 10px 14px)}
+.pane{padding:24px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+label{display:block;font-weight:600;font-size:.9rem;margin:0 0 6px}
+input[type=text],input[type=password]{width:100%;font:inherit;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:var(--soft);color:var(--ink)}
+.field{margin-bottom:14px}
+.dz{display:block;position:relative;text-align:center;padding:26px 16px;border:2px dashed var(--line);border-radius:14px;background:var(--soft);cursor:pointer;transition:.15s;margin-bottom:14px}
+.dz:hover,.dz.drag{border-color:var(--gold);background:rgba(184,137,47,.08)}
+.dz.has{border-style:solid;border-color:var(--ok)}
+.dz input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
+.dz .ic{font-size:1.7rem;line-height:1}
+.dz .nm{font-weight:500;margin-top:6px}
+.hs,.mono{font:.78rem ui-monospace,Menlo,monospace;color:var(--mut);word-break:break-all}
+details{margin:4px 0 16px;border:1px solid var(--line);border-radius:12px;padding:10px 14px;background:var(--soft)}
+summary{cursor:pointer;font-weight:600;font-size:.9rem}
+details .field{margin:12px 0 0}
+.hint{font-size:.8rem;color:var(--mut);margin:4px 0 0}
+.steps{display:flex;gap:8px;list-style:none;margin:18px 0 0;padding:0;font-size:.82rem;color:var(--mut)}
+.steps li{flex:1;padding-top:10px;border-top:3px solid var(--line)}
+.steps li.on{border-color:var(--gold);color:var(--ink)}
+.steps li.done{border-color:var(--ok);color:var(--ok)}
+.msg{margin-top:14px;padding:10px 14px;border-radius:10px;background:var(--soft);border:1px solid var(--line);word-break:break-all;font-size:.92rem}
+.msg.bad{color:var(--bad);border-color:var(--bad)}.msg.ok{color:var(--ok);border-color:var(--ok)}
+.cert{margin-top:20px;padding:22px;border-radius:14px;border:1px solid var(--gold);outline:1px solid var(--gold);outline-offset:-7px;display:grid;grid-template-columns:120px 1fr;gap:20px;align-items:center;background:var(--soft)}
+.seal{width:118px;height:118px;border-radius:50%;border:4px double currentColor;display:grid;place-items:center;text-align:center;font:700 .95rem/1.2 Fraunces,Georgia,serif;transform:rotate(-8deg);padding:8px}
+.seal b{display:block;font-size:1.9rem;line-height:1}
 .ok{color:var(--ok)}.bad{color:var(--bad)}
-dl{margin:0;color:var(--ink)}dt{color:var(--mut);font-size:.85rem}dd{margin:0 0 8px;word-break:break-all}
+dl{margin:0}dt{font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--mut)}
+dd{margin:0 0 10px;word-break:break-all}dd a{color:var(--ink)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.spin{width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;display:inline-block;vertical-align:-2px;margin-right:8px;animation:r .7s linear infinite}
+@keyframes r{to{transform:rotate(360deg)}}
+footer{margin-top:28px;font-size:.82rem;color:var(--mut);text-align:center}
+footer a{color:inherit}
 [hidden]{display:none!important}
-@media(max-width:480px){.seal{grid-template-columns:1fr}}
-@media(prefers-reduced-motion:no-preference){.stamp{animation:st .4s ease-out}@keyframes st{from{transform:rotate(-8deg) scale(1.5);opacity:0}}}
+@media(max-width:560px){.grid,.cert{grid-template-columns:1fr}.cert{justify-items:center;text-align:left}.steps{font-size:.72rem}}
+@media(prefers-reduced-motion:no-preference){.seal{animation:st .45s ease-out}@keyframes st{from{transform:rotate(-8deg) scale(1.6);opacity:0}}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
 <main>
 <header>
-  <div><h1>CertChain</h1><p class="sub">Xác thực bằng cấp trên Ethereum Sepolia và IPFS</p></div>
-  <div><button id="connect">Kết nối MetaMask</button><div id="acct" class="sub"></div></div>
+  <div class="brand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7.5 3v5.5c0 4.4-3.1 8-7.5 9.5-4.4-1.5-7.5-5.1-7.5-9.5V6L12 3z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>CertChain</div>
+  <div class="wallet"><span class="pill" id="net">Sepolia</span><span class="pill" id="acct">Chưa kết nối ví</span><button class="ghost" id="connect">Kết nối MetaMask</button></div>
 </header>
-<nav>
-  <button class="tab" id="t-verify" aria-selected="true">Xác thực</button>
-  <button class="tab" id="t-issue" aria-selected="false">Phát hành</button>
-</nav>
 
-<section id="p-verify">
-  <label for="vfile">File PDF cần kiểm tra</label>
-  <input id="vfile" type="file" accept="application/pdf">
-  <label for="vhash">Hoặc nhập mã hash SHA-256</label>
-  <input id="vhash" placeholder="0x…">
+<h1>Bằng cấp thật, kiểm tra được trong vài giây.</h1>
+<p class="lead">Mỗi bằng cấp được băm thành mã SHA-256 duy nhất và ghi công khai trên Ethereum Sepolia. File PDF gốc được lưu trên IPFS. Sửa một byte là mã hash đổi hoàn toàn.</p>
+
+<div class="tabs" role="tablist">
+  <button role="tab" id="t-verify" aria-selected="true">Xác thực</button>
+  <button role="tab" id="t-issue" aria-selected="false">Phát hành</button>
+</div>
+
+<div class="card">
+<section class="pane" id="p-verify">
+  <label class="dz" id="dz-v"><input type="file" accept="application/pdf" id="vfile" aria-label="Chọn file PDF cần kiểm tra"><span class="ic">📄</span><div class="nm">Kéo thả PDF vào đây hoặc bấm để chọn</div><div class="hs"></div></label>
+  <div class="field"><label for="vhash">Hoặc nhập mã hash SHA-256</label><input type="text" id="vhash" placeholder="0x…" autocomplete="off"></div>
   <button id="check">Kiểm tra</button>
   <div id="result"></div>
 </section>
 
-<section id="p-issue" hidden>
-  <label for="student">Tên người nhận</label><input id="student">
-  <label for="course">Tên bằng cấp / chứng chỉ</label><input id="course">
-  <label for="ifile">File PDF gốc</label><input id="ifile" type="file" accept="application/pdf">
-  <label for="jwt">Pinata JWT (không được lưu lại)</label><input id="jwt" type="password" autocomplete="off">
-  <label for="cid">CID trên IPFS (tự điền sau khi tải lên, hoặc dán CID có sẵn)</label><input id="cid">
-  <button id="issue">Phát hành</button>
+<section class="pane" id="p-issue" hidden>
+  <div class="grid">
+    <div class="field"><label for="student">Tên người nhận</label><input type="text" id="student" placeholder="Nguyễn Văn A"></div>
+    <div class="field"><label for="course">Tên bằng cấp / chứng chỉ</label><input type="text" id="course" placeholder="Kỹ sư Công nghệ thông tin"></div>
+  </div>
+  <label class="dz" id="dz-i"><input type="file" accept="application/pdf" id="ifile" aria-label="Chọn file PDF gốc"><span class="ic">📄</span><div class="nm">Kéo thả PDF gốc vào đây hoặc bấm để chọn</div><div class="hs"></div></label>
+  <details>
+    <summary>Cách lưu file lên IPFS</summary>
+    <div class="field"><label for="jwt">Pinata JWT (tự động tải lên, không được lưu lại)</label><input type="password" id="jwt" autocomplete="off"></div>
+    <div class="field"><label for="cid">Hoặc dán CID đã có sẵn</label><input type="text" id="cid" placeholder="bafy… hoặc Qm…" autocomplete="off"><p class="hint">Nếu đã có CID, web bỏ qua bước tải lên và không cần JWT.</p></div>
+  </details>
+  <button id="issue">Phát hành lên blockchain</button>
+  <ol class="steps" id="steps"><li>1. Băm SHA-256</li><li>2. Lưu IPFS</li><li>3. Ghi blockchain</li></ol>
+  <div id="done"></div>
 </section>
+</div>
 
-<div id="log" role="status"></div>
+<div class="msg" id="msg" role="status" hidden></div>
+<footer>Hợp đồng <a id="caddr" target="_blank" rel="noopener"></a> · Mạng thử nghiệm Ethereum Sepolia</footer>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
 <script>
-const CONTRACT_ADDRESS = "0xDÁN_ĐỊA_CHỈ_CONTRACT_Ở_ĐÂY";
-const SEPOLIA = "0xaa36a7";
+const CONTRACT_ADDRESS = "0x538d6b56513171cC77bdE5eDd0FbA1f82BD00E4b";
+const SEPOLIA = "0xaa36a7", SCAN = "https://sepolia.etherscan.io";
 const ABI = [
   "function issueCertificate(bytes32 hash,string ipfsCid,string student,string course)",
   "function verify(bytes32 hash) view returns (bool exists,bool revoked,string ipfsCid,string student,string course,address issuer,uint256 issuedAt)"
 ];
-const $ = id => document.getElementById(id);
+const $ = s => document.querySelector(s);
 const reader = new ethers.JsonRpcProvider("https://ethereum-sepolia-rpc.publicnode.com");
 let signer = null;
+const short = (s, a = 6, b = 4) => s.slice(0, a) + "…" + s.slice(-b);
+const msg = (t, c = "") => { const m = $("#msg"); m.className = "msg " + c; m.textContent = t; m.hidden = !t; };
+const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
 
-const log = (m, c = "") => { $("log").className = c; $("log").textContent = m; };
+$("#caddr").textContent = short(CONTRACT_ADDRESS, 8, 6);
+$("#caddr").href = SCAN + "/address/" + CONTRACT_ADDRESS;
 
 async function sha256(file) {
   const buf = await crypto.subtle.digest("SHA-256", await file.arrayBuffer());
@@ -85,88 +141,127 @@ async function sha256(file) {
 
 function tab(name) {
   for (const t of ["verify", "issue"]) {
-    $("p-" + t).hidden = t !== name;
-    $("t-" + t).setAttribute("aria-selected", t === name);
+    $("#p-" + t).hidden = t !== name;
+    $("#t-" + t).setAttribute("aria-selected", t === name);
   }
-  log("");
+  msg("");
 }
-$("t-verify").onclick = () => tab("verify");
-$("t-issue").onclick = () => tab("issue");
+$("#t-verify").onclick = () => tab("verify");
+$("#t-issue").onclick = () => tab("issue");
+
+function dropzone(id, onHash) {
+  const z = $("#" + id), i = z.querySelector("input"), nm = z.querySelector(".nm"), hs = z.querySelector(".hs");
+  const idle = nm.textContent;
+  const show = async f => {
+    z.classList.toggle("has", !!f);
+    nm.textContent = f ? f.name + " · " + Math.max(1, Math.round(f.size / 1024)) + " KB" : idle;
+    hs.textContent = "";
+    if (!f) return;
+    const h = await sha256(f);
+    hs.textContent = h;
+    if (onHash) onHash(h);
+  };
+  i.onchange = () => show(i.files[0]);
+  ["dragenter", "dragover"].forEach(e => z.addEventListener(e, ev => { ev.preventDefault(); z.classList.add("drag"); }));
+  ["dragleave", "drop"].forEach(e => z.addEventListener(e, ev => { ev.preventDefault(); z.classList.remove("drag"); }));
+  z.addEventListener("drop", ev => { if (ev.dataTransfer.files[0]) { i.files = ev.dataTransfer.files; show(i.files[0]); } });
+}
+dropzone("dz-v", () => check());
+dropzone("dz-i");
 
 async function connect() {
-  if (!window.ethereum) { log("Chưa cài MetaMask.", "bad"); return; }
+  if (!window.ethereum) { msg("Chưa cài MetaMask. Hãy cài tiện ích MetaMask rồi tải lại trang.", "bad"); return false; }
   try {
     await ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: SEPOLIA }] });
     signer = await new ethers.BrowserProvider(ethereum).getSigner();
-    const a = await signer.getAddress();
-    $("acct").textContent = a.slice(0, 6) + "…" + a.slice(-4);
-  } catch (e) { log(e.shortMessage || e.message, "bad"); }
+    $("#acct").textContent = short(await signer.getAddress());
+    $("#acct").classList.add("on");
+    $("#net").classList.add("on");
+    $("#connect").hidden = true;
+    return true;
+  } catch (e) { msg(e.shortMessage || e.message, "bad"); return false; }
 }
-$("connect").onclick = connect;
+$("#connect").onclick = connect;
 
 function row(dl, label, value, href) {
-  const dt = document.createElement("dt"), dd = document.createElement("dd");
-  dt.textContent = label;
-  if (href) { const a = document.createElement("a"); a.href = href; a.target = "_blank"; a.rel = "noopener"; a.textContent = value; dd.append(a); }
-  else dd.textContent = value;
-  dl.append(dt, dd);
+  const dd = el("dd");
+  if (href) { const a = el("a", "", value); a.href = href; a.target = "_blank"; a.rel = "noopener"; dd.append(a); } else dd.textContent = value;
+  dl.append(el("dt", "", label), dd);
 }
 
-$("check").onclick = async () => {
-  const f = $("vfile").files[0];
-  let h = $("vhash").value.trim();
+async function check() {
+  const f = $("#vfile").files[0];
+  let h = $("#vhash").value.trim();
+  const btn = $("#check");
+  btn.disabled = true;
   try {
     if (f) h = await sha256(f);
-    if (!/^0x[0-9a-fA-F]{64}$/.test(h)) { log("Chọn file PDF hoặc nhập hash gồm 0x và 64 ký tự.", "bad"); return; }
-    log("Đang truy vấn blockchain…");
+    if (!/^0x[0-9a-fA-F]{64}$/.test(h)) { msg("Chọn file PDF hoặc nhập hash gồm 0x và 64 ký tự.", "bad"); return; }
+    msg("Đang truy vấn blockchain…");
     const r = await new ethers.Contract(CONTRACT_ADDRESS, ABI, reader).verify(h);
-    log("");
-    const box = $("result"); box.replaceChildren();
-    const wrap = document.createElement("div"); wrap.className = "seal";
-    const st = document.createElement("div");
-    const state = !r.exists ? ["Không tìm thấy", "bad"] : r.revoked ? ["Đã thu hồi", "bad"] : ["Hợp lệ", "ok"];
-    st.className = "stamp " + state[1]; st.textContent = state[0];
-    const dl = document.createElement("dl");
+    msg("");
+    const state = !r.exists ? ["✕", "Không tìm thấy", "bad"] : r.revoked ? ["✕", "Đã thu hồi", "bad"] : ["✓", "Hợp lệ", "ok"];
+    const box = $("#result"); box.replaceChildren();
+    const cert = el("div", "cert");
+    const seal = el("div", "seal " + state[2]);
+    seal.append(el("b", "", state[0]), document.createTextNode(state[1]));
+    const dl = el("dl");
     row(dl, "Hash SHA-256", h);
     if (r.exists) {
       row(dl, "Người nhận", r.student);
       row(dl, "Bằng cấp", r.course);
-      row(dl, "Đơn vị cấp", r.issuer, "https://sepolia.etherscan.io/address/" + r.issuer);
+      row(dl, "Đơn vị cấp", short(r.issuer, 8, 6), SCAN + "/address/" + r.issuer);
       row(dl, "Ngày cấp", new Date(Number(r.issuedAt) * 1000).toLocaleString("vi-VN"));
-      row(dl, "File gốc trên IPFS", r.ipfsCid, "https://ipfs.io/ipfs/" + r.ipfsCid);
+      row(dl, "File gốc trên IPFS", short(r.ipfsCid, 10, 6), "https://ipfs.io/ipfs/" + r.ipfsCid);
+    } else if (f || h) {
+      dl.append(el("dd", "", "Mã hash này chưa từng được phát hành. File có thể đã bị chỉnh sửa hoặc chưa được ghi nhận."));
     }
-    wrap.append(st, dl); box.append(wrap);
-  } catch (e) { log(e.shortMessage || e.message, "bad"); }
-};
+    cert.append(seal, dl); box.append(cert);
+  } catch (e) { msg(e.shortMessage || e.message, "bad"); }
+  finally { btn.disabled = false; }
+}
+$("#check").onclick = check;
 
-$("issue").onclick = async () => {
-  const btn = $("issue");
-  const f = $("ifile").files[0], st = $("student").value.trim(), co = $("course").value.trim();
-  if (!f || !st || !co) { log("Nhập đủ tên, bằng cấp và chọn file PDF.", "bad"); return; }
-  btn.disabled = true;
+function step(n) {
+  [...$("#steps").children].forEach((li, i) => { li.className = i < n ? "done" : i === n ? "on" : ""; });
+}
+
+$("#issue").onclick = async () => {
+  const btn = $("#issue"), label = btn.textContent;
+  const f = $("#ifile").files[0], st = $("#student").value.trim(), co = $("#course").value.trim();
+  $("#done").replaceChildren();
+  if (!f || !st || !co) { msg("Nhập đủ tên người nhận, tên bằng cấp và chọn file PDF.", "bad"); return; }
+  btn.disabled = true; btn.replaceChildren(el("span", "spin"), document.createTextNode("Đang xử lý…"));
   try {
-    if (!signer) await connect();
-    if (!signer) return;
+    if (!signer && !(await connect())) return;
+    step(0);
     const h = await sha256(f);
-    let cid = $("cid").value.trim();
+    let cid = $("#cid").value.trim();
+    step(1);
     if (!cid) {
-      const jwt = $("jwt").value.trim();
-      if (!jwt) { log("Nhập Pinata JWT hoặc dán CID có sẵn.", "bad"); return; }
-      log("Đang tải file lên IPFS…");
+      const jwt = $("#jwt").value.trim();
+      if (!jwt) { msg("Mở mục “Cách lưu file lên IPFS” rồi nhập Pinata JWT hoặc dán CID có sẵn.", "bad"); step(-1); return; }
+      msg("Đang tải file lên IPFS…");
       const fd = new FormData(); fd.append("file", f); fd.append("network", "public");
       const res = await fetch("https://uploads.pinata.cloud/v3/files", { method: "POST", headers: { Authorization: "Bearer " + jwt }, body: fd });
       const j = await res.json();
       if (!res.ok) throw new Error("Pinata từ chối: " + JSON.stringify(j));
-      cid = j.data.cid; $("cid").value = cid;
+      cid = j.data.cid; $("#cid").value = cid;
     }
-    log("Xác nhận giao dịch trong MetaMask…");
+    step(2);
+    msg("Xác nhận giao dịch trong MetaMask…");
     const tx = await new ethers.Contract(CONTRACT_ADDRESS, ABI, signer).issueCertificate(h, cid, st, co);
-    log("Đang chờ Sepolia xác nhận…");
+    msg("Đang chờ Sepolia xác nhận…");
     await tx.wait();
-    log("Đã phát hành. Hash: " + h, "ok");
-  } catch (e) { log(e.shortMessage || e.message, "bad"); }
-  finally { btn.disabled = false; }
+    step(3);
+    msg("Đã phát hành thành công.", "ok");
+    const dl = el("dl"); dl.style.marginTop = "16px";
+    row(dl, "Hash SHA-256 (dùng để xác thực)", h);
+    row(dl, "Giao dịch", short(tx.hash, 10, 8), SCAN + "/tx/" + tx.hash);
+    $("#done").append(dl);
+  } catch (e) { step(-1); msg(e.shortMessage || e.message, "bad"); }
+  finally { btn.disabled = false; btn.textContent = label; }
 };
 </script>
-</body> 
+</body>
 </html>
