@@ -1,0 +1,263 @@
+{
+	"compiler": {
+		"version": "0.8.34+commit.80d5c536"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"inputs": [],
+				"stateMutability": "nonpayable",
+				"type": "constructor"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "bytes32",
+						"name": "hash",
+						"type": "bytes32"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "issuer",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "ipfsCid",
+						"type": "string"
+					}
+				],
+				"name": "CertificateIssued",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "bytes32",
+						"name": "hash",
+						"type": "bytes32"
+					}
+				],
+				"name": "CertificateRevoked",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "issuer",
+						"type": "address"
+					}
+				],
+				"name": "IssuerAdded",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "issuer",
+						"type": "address"
+					}
+				],
+				"name": "IssuerRemoved",
+				"type": "event"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "a",
+						"type": "address"
+					}
+				],
+				"name": "addIssuer",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"name": "isIssuer",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "hash",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "string",
+						"name": "ipfsCid",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "student",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "course",
+						"type": "string"
+					}
+				],
+				"name": "issueCertificate",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "owner",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "a",
+						"type": "address"
+					}
+				],
+				"name": "removeIssuer",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "hash",
+						"type": "bytes32"
+					}
+				],
+				"name": "revokeCertificate",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "hash",
+						"type": "bytes32"
+					}
+				],
+				"name": "verify",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "exists",
+						"type": "bool"
+					},
+					{
+						"internalType": "bool",
+						"name": "revoked",
+						"type": "bool"
+					},
+					{
+						"internalType": "string",
+						"name": "ipfsCid",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "student",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "course",
+						"type": "string"
+					},
+					{
+						"internalType": "address",
+						"name": "issuer",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "issuedAt",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"contracts/CertChain.sol": "CertChain"
+		},
+		"evmVersion": "osaka",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"contracts/CertChain.sol": {
+			"keccak256": "0xb5b507020fc19198d51e7a64a57f1148ac3331f4b26f359c29d302b0d3977969",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://f29ae04d72c467c7180c5a2eecbc7f5b0a5e5ecce9e18ddb1d49272bb7dee871",
+				"dweb:/ipfs/QmPP6fJvJRqBAMDGoDQu3q8DLuWTPJaBBMbf2Tfov4NJh1"
+			]
+		}
+	},
+	"version": 1
+}
