@@ -251,7 +251,7 @@ $("#issue").onclick = async () => {
     step(2);
     msg("Xác nhận giao dịch trong MetaMask…");
     const tx = await new ethers.Contract(CONTRACT_ADDRESS, ABI, signer).issueCertificate(h, cid, st, co);
-    msg("Đang chờ Sepolia xác nhận…");
+    msg("Đang chờ Sepolia xác nhận……");
     await tx.wait();
     step(3);
     msg("Đã phát hành thành công.", "ok");
